@@ -1,0 +1,640 @@
+/* Custom Colors Palette */
+:root {
+    --primary-purple: #4B0082;      /* Indigo - Main Action Color */
+    --secondary-purple: #6A1B9A;    /* Light Purple - Gradient/Highlight */
+    --background-color: #f0f2f6;    /* Light Gray Background */
+    --card-background: #ffffff;     /* White Card Background */
+    --text-color-dark: #333333;     /* Dark Text */
+    --text-color-muted: #6c757d;    /* Muted Text */
+    --light-bg-purple: #f3f0f9;     /* Very Light Purple for contrast elements */
+
+    /* Highlight Colors for Review Mode */
+    --correct-bg: #d4edda;          /* Light Green */
+    --correct-border: #c3e6cb;
+    --correct-text: #155724;        /* Dark Green */
+    --incorrect-bg: #f8d7da;        /* Light Red */
+    --incorrect-border: #f5c6cb;
+    --incorrect-text: #721C24;      /* Dark Red */
+}
+
+/* --- Base Styling --- */
+body {
+    background-color: var(--background-color);
+    font-family: 'Poppins', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    color: var(--text-color-dark);
+}
+
+.text-primary-custom {
+    color: var(--primary-purple) !important;
+}
+
+.bg-primary-custom-light {
+    background-color: var(--primary-purple) !important;
+    color: white !important;
+}
+
+/* --- Default Mobile Layout (Always Stacked) --- */
+.main-wrapper {
+    display: block; 
+    min-height: 100vh;
+    transition: all 0.4s ease-in-out; 
+}
+
+.sidebar {
+    width: 100%; 
+    min-width: 100%; 
+    background-color: var(--card-background);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.05);
+    z-index: 100;
+    position: relative;
+    transition: all 0.4s ease-in-out; 
+}
+
+.main-content {
+    flex-grow: 1;
+    transition: all 0.4s ease-in-out;
+    position: relative; /* Crucial for positioning the absolute loader */
+}
+
+/* -----------------------------------------------------------------
+   --- LOADER OVERLAY STYLING (UPDATED OPACITY AND BLUR) ---
+   ----------------------------------------------------------------- */
+
+#loader-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 1500; 
+    /* DECREASED OPACITY from 0.7 to 0.5 */
+    background: rgba(0, 0, 0, 0.5); 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    transition: opacity 0.3s ease;
+    
+    pointer-events: none; 
+}
+
+/* Class to apply the blur and show the overlay */
+.main-content.loading #home-content {
+    /* DECREASED BLUR INTENSITY from 5px to 3px */
+    filter: blur(3px);
+    transition: filter 0.3s ease;
+    pointer-events: none;
+}
+
+.main-content.loading #loader-overlay {
+    display: flex !important; 
+    pointer-events: auto; 
+}
+
+/* Reset the blur when not loading */
+.main-content:not(.loading) #home-content {
+    filter: blur(0);
+    transition: filter 0.3s ease;
+}
+
+/* Override the Bootstrap d-none utility to make sure the overlay can be hidden/shown by JS */
+#loader-overlay.d-none {
+    display: none !important;
+}
+
+/* -----------------------------------------------------------------
+   --- END LOADER OVERLAY STYLING ---
+   ----------------------------------------------------------------- */
+
+
+/* Desktop Collapse Class (Used by JS on large screens) */
+.main-wrapper.sidebar-hidden {
+    display: flex; 
+}
+.main-wrapper.sidebar-hidden .sidebar {
+    margin-left: -320px; 
+    opacity: 0;
+    pointer-events: none; 
+}
+
+/* --- Sticky Quiz Header --- */
+.sticky-quiz-header {
+    position: sticky;
+    top: 0;
+    z-index: 90;
+    background-color: var(--card-background);
+    padding: 15px 50px;
+    display: flex;
+    align-items: center;
+    border-bottom: 1px solid #ddd;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+}
+
+/* --- Toggle Button Styling --- */
+.btn-toggle-sidebar {
+    background-color: var(--secondary-purple);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 0.8em;
+    font-weight: 600;
+    transition: all 0.4s ease-in-out;
+}
+
+.btn-toggle-sidebar:hover {
+    background-color: var(--primary-purple);
+    color: white;
+}
+
+/* --- Home/Dashboard Button Style --- */
+.btn-home-reset {
+    background-color: #e9ecef; 
+    color: var(--primary-purple);
+    border: 1px solid #ced4da;
+    border-radius: 6px;
+    padding: 8px 12px;
+    font-size: 0.8em;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    text-decoration: none; 
+}
+
+.btn-home-reset:hover {
+    background-color: var(--light-bg-purple);
+    border-color: var(--secondary-purple);
+    color: var(--primary-purple);
+}
+
+/* --- Form & Input Styles --- */
+.form-section .card {
+    border: none;
+    background-color: var(--light-bg-purple);
+    border-left: 4px solid var(--secondary-purple);
+    transition: transform 0.2s;
+}
+
+.form-section .card:hover {
+    transform: translateY(-2px);
+}
+
+/* -----------------------------------------------------------------
+   --- FORM CONTROL STYLING (Inputs & Textareas) ---
+   ----------------------------------------------------------------- */
+
+/* Form Control Overrides (Inputs and Textareas) */
+.form-control {
+    border: 1px solid #ced4da; 
+    border-radius: 8px; 
+    box-shadow: none;
+    transition: all 0.2s ease-in-out;
+    background-color: var(--card-background);
+    padding: 0.75rem 1.25rem; 
+    height: auto; 
+}
+
+/* Focus State (Purple Glow) */
+.form-control:focus {
+    color: var(--text-color-dark);
+    background-color: var(--card-background);
+    border-color: var(--secondary-purple); 
+    outline: 0;
+    box-shadow: 0 0 0 0.25rem rgba(75, 0, 130, 0.3); 
+}
+
+
+/* -----------------------------------------------------------------
+   --- CUSTOM DROPDOWN STYLING (Difficulty Level) ---
+   ----------------------------------------------------------------- */
+
+/* 1. Custom Button (The part that is always visible) */
+.custom-dropdown-button {
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    background-color: var(--card-background);
+    color: var(--text-color-dark);
+    padding: 0.75rem 1.25rem;
+    font-weight: 500;
+    padding-right: 2.5rem; 
+    background-image: none; /* Remove default Bootstrap arrow background image */
+    height: auto;
+}
+
+.custom-dropdown-button:focus, .custom-dropdown-button:active, .custom-dropdown-button:hover {
+    border-color: var(--secondary-purple) !important;
+    box-shadow: 0 0 0 0.25rem rgba(75, 0, 130, 0.3) !important;
+    color: var(--text-color-dark);
+    background-color: var(--card-background);
+}
+
+/* 2. Styling the actual pop-up menu list */
+.custom-dropdown-menu {
+    border-radius: 8px;
+    padding: 0;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Professional shadow */
+    background-color: var(--card-background);
+    min-width: 100%; 
+    border: 1px solid var(--light-bg-purple); /* Subtle border */
+    overflow: hidden; /* Important for containing rounded corners */
+}
+
+/* 3. Styling the individual menu items */
+.custom-dropdown-menu .dropdown-item {
+    padding: 0.75rem 1.25rem; /* Matches button padding */
+    color: var(--text-color-dark);
+    font-weight: 500;
+    transition: background-color 0.2s;
+    border-radius: 0; 
+}
+
+.custom-dropdown-menu .dropdown-item:hover {
+    background-color: var(--light-bg-purple);
+    color: var(--primary-purple);
+}
+
+/* --- Difficulty Level Coloring Helpers (Button and Menu Item Active State) --- */
+
+/* Low Difficulty */
+.difficulty-low {
+    color: var(--text-color-dark) !important; 
+    border-color: #e0e0e0 !important; 
+    font-weight: 500;
+}
+.difficulty-low.custom-dropdown-button {
+    background-color: var(--light-bg-purple) !important; 
+}
+.difficulty-select-option[data-value="Low"].active {
+    background-color: #e6f7e9 !important; /* Subtle Green Selection */
+    color: #155724 !important; 
+    font-weight: 600;
+}
+
+/* Medium Difficulty */
+.difficulty-medium {
+    color: var(--text-color-dark) !important; 
+    border-color: var(--light-bg-purple) !important;
+    font-weight: 600;
+}
+.difficulty-medium.custom-dropdown-button {
+    background-image: linear-gradient(to right, var(--light-bg-purple) 0%, #ffffff 100%) !important;
+}
+.difficulty-select-option[data-value="Medium"].active {
+    background-color: #fff8e1 !important; /* Subtle Yellow/Orange Selection */
+    color: #856404 !important;
+    font-weight: 600;
+}
+
+/* High Difficulty */
+.difficulty-high {
+    color: var(--primary-purple) !important; 
+    border: 2px solid var(--secondary-purple) !important; 
+    font-weight: 700;
+}
+.difficulty-high.custom-dropdown-button {
+    background-color: var(--card-background) !important;
+}
+.difficulty-select-option[data-value="High"].active {
+    background-color: #fcebeb !important; /* Subtle Red/Pink Selection */
+    color: #721c24 !important; 
+    font-weight: 700;
+}
+
+
+/* -----------------------------------------------------------------
+   --- END CUSTOM DROPDOWN STYLING ---
+   ----------------------------------------------------------------- */
+
+
+/* --- FILE UPLOAD BUTTON --- */
+.custom-file-upload {
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(75, 0, 130, 0.3); 
+    transition: all 0.3s ease;
+}
+
+#file-upload-placeholder {
+    padding: 1rem 1rem;
+    text-align: center;
+    font-size: 1rem; 
+    font-weight: 700; 
+    color: var(--card-background); 
+    background-color: var(--primary-purple); 
+    transition: all 0.3s ease;
+}
+
+.form-control-sm {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    opacity: 0; 
+    cursor: pointer;
+    border: none;
+    padding: 0;
+    margin: 0;
+    height: 100%;
+    width: 100%;
+}
+
+.custom-file-upload:hover {
+    box-shadow: 0 6px 15px rgba(75, 0, 130, 0.5);
+    transform: translateY(-1px);
+}
+
+.custom-file-upload:hover #file-upload-placeholder {
+    background-color: var(--secondary-purple); 
+    color: var(--card-background); 
+}
+
+#file-upload-placeholder.file-selected {
+    background-color: var(--secondary-purple); 
+    color: var(--card-background);
+    font-weight: 500;
+}
+
+
+/* --- GRADIENT BUTTON --- */
+.btn-gradient {
+    height: 3.5em; 
+    font-size: 1.1em;
+    border: none;
+    border-radius: 10px; 
+    background: linear-gradient(135deg, var(--primary-purple) 0%, var(--secondary-purple) 100%); 
+    color: white;
+    font-weight: 700;
+    letter-spacing: 0.5px;
+    box-shadow: 0 8px 20px rgba(75, 0, 130, 0.4); 
+    transition: all 0.3s ease;
+}
+
+.btn-gradient:hover:not(:disabled) {
+    background: linear-gradient(135deg, var(--secondary-purple) 0%, var(--primary-purple) 100%); 
+    box-shadow: 0 10px 25px rgba(75, 0, 130, 0.6);
+    transform: translateY(-2px); 
+    color: white;
+}
+
+.btn-gradient:disabled {
+    background: #CCCCCC !important;
+    color: #666666 !important;
+    box-shadow: none !important;
+    transform: none !important;
+}
+
+
+/* --- HOME DASHBOARD STYLES --- */
+.app-header {
+    padding-top: 50px;
+    padding-bottom: 20px;
+}
+
+.welcome-card {
+    background-color: var(--card-background);
+    border-radius: 15px;
+    border: 1px solid #e0e0e0;
+}
+
+.process-steps-list {
+    max-width: 900px;
+}
+
+.step-box {
+    background-color: var(--light-bg-purple);
+    padding: 15px;
+    border-radius: 8px;
+    border-left: 4px solid var(--primary-purple);
+    font-size: 0.95rem;
+    font-weight: 500;
+    min-height: 80px;
+    display: flex;
+    align-items: center;
+    transition: all 0.2s;
+}
+
+.step-box i {
+    color: var(--primary-purple);
+    font-size: 1.2em;
+    margin-right: 10px;
+}
+
+.step-box > div {
+    flex-grow: 1;
+}
+
+.step-box:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
+}
+
+/* --- Quiz Area Styling --- */
+.question-card {
+    background-color: var(--card-background);
+    border-radius: 12px;
+    padding: 25px;
+    margin-bottom: 25px;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+    border-left: 5px solid var(--primary-purple);
+}
+
+.question-text {
+    font-size: 1.25em;
+    font-weight: 600;
+    color: var(--text-color-dark);
+    margin-bottom: 15px;
+}
+
+.option-box {
+    position: relative;
+    display: block; 
+    width: 100%;
+    padding: 15px;
+    margin-bottom: 10px;
+    border-radius: 8px;
+    border: 1px solid #e0e0e0;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    background-color: var(--card-background);
+}
+
+.option-box:hover:not(.correct):not(.incorrect) {
+    background-color: var(--light-bg-purple);
+    border-color: var(--secondary-purple);
+}
+
+.option-box.selected {
+    border: 2px solid var(--primary-purple);
+    background-color: #f4f0ff;
+    box-shadow: 0 0 5px rgba(75, 0, 130, 0.2);
+}
+
+.option-box input[type="radio"] {
+    display: none;
+}
+
+
+/* --- REVIEW MODE HIGHLIGHTS --- */
+.option-box.correct {
+    background-color: var(--correct-bg); 
+    color: var(--correct-text); 
+    border-color: var(--correct-border);
+    font-weight: 600;
+    box-shadow: 0 0 5px rgba(21, 87, 36, 0.3);
+}
+
+.option-box.incorrect {
+    background-color: var(--incorrect-bg); 
+    color: var(--incorrect-text); 
+    border-color: var(--incorrect-border);
+    font-weight: 600;
+    box-shadow: 0 0 5px rgba(114, 28, 36, 0.3);
+}
+
+.option-box.incorrect i, .option-box.correct i {
+    font-size: 1.2em;
+    margin-right: 8px;
+}
+
+.accordion-item {
+    border: 1px solid #ddd;
+    margin-top: 10px;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.accordion-button {
+    background-color: var(--light-bg-purple) !important;
+    color: var(--primary-purple);
+    font-weight: 600;
+}
+
+.accordion-body {
+    background-color: #f9f9f9;
+}
+
+
+/* -----------------------------------------------------------------
+   --- RESPONSIVE ADJUSTMENTS (Tablet/Desktop Layout) ---
+   ----------------------------------------------------------------- */
+
+@media (min-width: 769px) {
+    
+    .main-wrapper {
+        display: flex;
+    }
+
+    .sidebar {
+        width: 320px;
+        min-width: 320px; 
+        position: sticky;
+        top: 0;
+        align-self: flex-start;
+        box-shadow: 4px 0 20px rgba(0, 0, 0, 0.05);
+        transform: translateX(0) !important; 
+    }
+    
+    .main-wrapper.sidebar-hidden .sidebar {
+        margin-left: -320px; 
+        opacity: 0;
+        pointer-events: none; 
+    }
+
+    .main-wrapper.sidebar-hidden .btn-toggle-sidebar #toggle-icon {
+        transform: rotate(180deg);
+    }
+
+    .main-content > .p-5 {
+        padding: 3rem !important; 
+    }
+}
+
+
+/* -----------------------------------------------------------------
+   --- MOBILE ADJUSTMENTS (Max-width 768px) ---
+   ----------------------------------------------------------------- */
+
+@media (max-width: 768px) {
+    
+    /* NEW RULE: Hide the "Show Panel" toggle button completely on mobile */
+    #toggle-sidebar-btn {
+        display: none !important;
+    }
+
+    .sidebar {
+        width: 100%;
+        min-width: 100%;
+        padding: 1rem !important;
+        position: fixed;
+        height: 100vh;
+        top: 0;
+        left: 0;
+        z-index: 2000;
+        overflow-y: auto;
+        transform: translateX(-100%);
+    }
+    
+    /* Show Control Panel on Home/Config by default (if not quiz-active) */
+    .sidebar:not(.quiz-active-mobile) {
+         transform: translateX(0);
+         position: relative; 
+         height: auto;
+    }
+    
+    /* Hide Control Panel permanently when Quiz is active (Active or Review) */
+    .sidebar.quiz-active-mobile {
+         transform: translateX(-100%) !important; 
+         position: fixed; 
+         height: 100vh;
+         padding: 0 !important;
+    }
+
+    .main-content {
+        padding-top: 0 !important;
+    }
+    
+    .sticky-quiz-header .btn-toggle-sidebar {
+        display: none !important; /* Redundant but safe hide for the element on mobile */
+    }
+    
+    .app-header {
+        padding-top: 15px;
+    }
+
+    .welcome-card {
+        padding: 1rem !important;
+    }
+    .main-content > .p-5 {
+        padding: 1rem !important; 
+    }
+    
+    .sticky-quiz-header {
+        padding: 10px 15px; 
+    }
+
+    .sticky-quiz-header .quiz-info .small {
+        display: none; 
+    }
+    
+    .btn-home-reset {
+        width: 40px; 
+        text-align: center;
+        padding: 8px 0; 
+        font-size: 0;
+    }
+    .btn-home-reset i {
+        font-size: 1rem; 
+        margin-right: 0 !important;
+    }
+    
+    .step-box {
+        flex-direction: column; 
+        align-items: flex-start;
+    }
+    .step-box i {
+        margin-bottom: 5px;
+        margin-right: 0 !important;
+    }
+}
