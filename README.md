@@ -1,17 +1,44 @@
-# Quizer Pro: AI Quiz Generator
-🚀 Live Application
+# QuizerAI
 
-You can access the hosted version here: https://quizerai.onrender.com/
+**QuizerAI** is an AI-powered quiz generator that creates customized
+quizzes from PDFs or plain text. It allows users to choose the number of
+questions and difficulty level, making it useful for students, teachers,
+and self-learners.
 
-## ✨ Overview
+🔗 **Live Demo:** https://quizerai.onrender.com
 
-Quizer Pro is a dynamic, full-stack web application built with Flask and powered by the Google Gemini API for on-demand quiz generation. It allows users to instantly transform any source material—via pasted text or uploaded PDF files—into a customizable, interactive, multiple-choice quiz.
 
-Key Features:
-AI-Powered Generation: Leverages the Gemini 2.5 Flash model for fast, structured quiz creation.
+## Features
 
-Flexible Input: Supports both Pasted Text and PDF Uploads (via PyMuPDF).
+- Upload **PDF documents** or paste **text content**
+- Generate quizzes using **AI**
+- Choose **difficulty level** (easy / medium / hard)
+- Select the **number of questions**
+- Fast and simple user interface
+- Deployed using **Render**
 
-Customization: Define the number of questions and the difficulty level (Low, Medium, High).
 
-Review Mode: After submission, view your final score and access detailed Gemini-generated rationales for every answer.
+## How It Works
+
+1.  Upload a PDF or paste text into the input field
+2.  Choose quiz difficulty and number of questions
+3.  Click **Generate Quiz**
+4.  The AI analyzes the content and generates quiz questions
+
+
+## Future Improvements
+
+-   User accounts
+-   Export quizzes as PDF
+-   UI/UX improvements
+
+
+## Disclaimer
+
+This project is for educational purposes only. Avoid uploading sensitive
+or personal documents.
+
+
+## Author
+
+Built by **s4sahiko**
