@@ -3,19 +3,18 @@ import json
 import requests
 from flask import Flask, render_template, request, redirect, url_for, session, jsonify
 import fitz # PyMuPDF for PDF text extraction
+from dotenv import load_dotenv
+
+load_dotenv()
 
 app = Flask(__name__)
 # This is crucial for securing sessions.
-app.secret_key = 'your_long_secure_secret_key' 
+# Use environment variable for production, fallback for development
+app.secret_key = os.environ.get('SECRET_KEY', 'your_long_secure_secret_key') 
 
-# --- Gemini API Configuration ---
-API_KEY = os.environ.get("GEMINI_API_KEY")
-
-# 2. Fallback check: IF YOU HARDCODE, YOU MUST REPLACE THIS STRING
-if not API_KEY:
-    API_KEY = "YOUR_GEMINI_API_KEY_HERE" 
-
-API_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-preview-09-2025:generateContent"
+# --- Groq API Configuration ---
+GROQ_API_KEY = os.environ.get("GROQ_API_KEY")
+API_URL = "https://api.groq.com/openai/v1/chat/completions"
 
 # --- Utility Functions ---
 
@@ -34,9 +33,9 @@ def get_pdf_text(uploaded_file):
         return None
 
 def generate_quiz_data(content_text, num_questions, difficulty):
-    """Generates quiz data using the Gemini API."""
-    if not API_KEY or API_KEY == "YOUR_GEMINI_API_KEY_HERE":
-        return {"error": "Gemini API Key is missing or incorrectly configured. Please set the 'GEMINI_API_KEY' environment variable or replace the placeholder in app.py."}
+    """Generates quiz data using the Groq API."""
+    if not GROQ_API_KEY:
+        return {"error": "Groq API Key is missing. Please set the 'GROQ_API_KEY' environment variable in your .env file."}
 
     # Content length check for meaningful content
     if not content_text or len(content_text.strip()) < 50:
@@ -47,88 +46,61 @@ def generate_quiz_data(content_text, num_questions, difficulty):
     You are an expert quiz generator. Your task is to analyze the provided text content
     and generate a quiz of exactly {num_questions} multiple-choice questions.
     The quiz must be of '{difficulty}' difficulty. Ensure every question has 4 unique options, 
-    one of which is marked as isCorrect: true. The response MUST strictly adhere to the provided JSON schema.
-    
-    Content for Quiz Generation (Limited to first 20000 characters):
-    ---
-    {content_text[:20000]}
-    ---
+    one of which is marked as isCorrect: true.
+    Return ONLY a JSON object with a single key "questions", which is an array of question objects.
+    Each question object must have: "question", "answerOptions" (array of 4 objects with "text", "rationale", "isCorrect"), and "hint".
     """ 
 
-    # JSON Schema for structured output
-    quiz_schema = {
-        "type": "OBJECT",
-        "properties": {
-            "questions": {
-                "type": "ARRAY",
-                "items": {
-                    "type": "OBJECT",
-                    "properties": {
-                        "question": {"type": "STRING"},
-                        "answerOptions": {
-                            "type": "ARRAY",
-                            "items": {
-                                "type": "OBJECT",
-                                "properties": {
-                                    "text": {"type": "STRING"},
-                                    "rationale": {"type": "STRING"},
-                                    "isCorrect": {"type": "BOOLEAN"}
-                                },
-                                "required": ["text", "rationale", "isCorrect"]
-                            }
-                        },
-                        "hint": {"type": "STRING"} 
-                    },
-                    "required": ["question", "answerOptions", "hint"]
-                }
-            }
-        },
-        "required": ["questions"]
-    }
+    user_prompt = f"Content for Quiz Generation (Limited to first 15000 characters):\n---\n{content_text[:15000]}\n---"
 
     payload = {
-        "contents": [{"parts": [{"text": "Generate the quiz based on the instructions."}]}],
-        "systemInstruction": {"parts": [{"text": system_prompt}]},
-        "generationConfig": { 
-            "responseMimeType": "application/json",
-            "responseSchema": quiz_schema
-        }
+        "model": "llama-3.3-70b-versatile",
+        "messages": [
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
+        ],
+        "response_format": {"type": "json_object"},
+        "temperature": 0.1
     }
     
-    headers = {'Content-Type': 'application/json', 'X-Goog-Api-Key': API_KEY}
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Bearer {GROQ_API_KEY}'
+    }
 
     try:
         response = requests.post(API_URL, headers=headers, json=payload, timeout=60)
         
-        # Comprehensive Error Logging
         if response.status_code >= 400:
             print(f"--- API Error DEBUG (Status {response.status_code}) ---")
-            try:
-                error_details = response.json()
-                print(f"Error Details: {json.dumps(error_details, indent=2)}")
-                if 'error' in error_details and 'message' in error_details['error']:
-                    # Return specific error message from the API response body
-                    return {"error": f"API Request Error: {response.status_code}. Detail: {error_details['error']['message']}"}
-            except json.JSONDecodeError:
-                print(f"Raw Response Text: {response.text[:200]}...")
-            
-            response.raise_for_status() 
+            print(f"Error Details: {response.text}")
+            return {"error": f"API Request Error: {response.status_code}. Please check your API key."}
 
         # Successful response processing
         result = response.json()
+        content_text = result['choices'][0]['message']['content']
+        quiz_data = json.loads(content_text)
         
-        json_text = result['candidates'][0]['content']['parts'][0]['text']
-        quiz_data = json.loads(json_text)
+        # Ensure it has 'questions' key
+        if 'questions' not in quiz_data and isinstance(quiz_data, list):
+             quiz_data = {"questions": quiz_data}
+        elif 'questions' not in quiz_data:
+             # Try to find an array in the object
+             for val in quiz_data.values():
+                 if isinstance(val, list):
+                     quiz_data = {"questions": val}
+                     break
         
+        if 'questions' not in quiz_data:
+            return {"error": "The AI returned an invalid response structure."}
+
         return {"success": True, "quiz": quiz_data['questions']}
 
     except requests.exceptions.RequestException as e:
         error_msg = f"API Request Error: {e}"
-        print(f"--- Final Request Exception ---")
         print(error_msg)
         return {"error": error_msg}
     except (json.JSONDecodeError, KeyError) as e:
-        print(f"--- JSON/KeyError ---")
         print(f"API returned invalid data or JSON structure: {e}")
         return {"error": "The AI returned an invalid response structure. Please try again."}
 
@@ -251,4 +223,6 @@ def reset_quiz():
     return redirect(url_for('index'))
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    # Run in debug mode locally, production server (gunicorn) handles deployment
+    port = int(os.environ.get('PORT', 5000))
+    app.run(debug=True, host='0.0.0.0', port=port)

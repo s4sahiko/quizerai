@@ -1,201 +1,231 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="light">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Quizer Pro | AI Quiz Generator</title>
+    <title>Quizer Pro | AI-Powered Learning</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🤖</text></svg>">
+    <link rel="icon"
+        href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
 </head>
+
 <body>
-    
-    <div class="main-wrapper" id="main-wrapper"> 
-        
-        <div class="sidebar p-4 shadow-lg sticky-top {% if session.get('quiz_generated') %}quiz-active-mobile{% endif %}" id="sidebar">
-            <div class="text-center mb-4">
-                <h1 class="logo-title"><i class="fas fa-brain"></i> Quizer Pro</h1>
-            </div>
-            
-            <div class="sidebar-content-wrapper">
 
-                <h4 class="mb-3 sidebar-heading"> &raquo; Quiz Control Panel</h4>
-                <hr class="sidebar-hr">
-
-                {% if error %}
-                    <div class="alert alert-danger" role="alert">{{ error }}</div>
-                {% endif %}
-
-                <form method="POST" enctype="multipart/form-data" action="{{ url_for('index') }}" id="quiz-generation-form">
-                    <div class="form-section card mb-3">
-                        <div class="card-body">
-                            <h5 class="card-title"><i class="fas fa-file-alt"></i> Content Source</h5>
-                            <div class="mb-3">
-                                <label for="file_upload" class="form-label">Upload PDF Document:</label>
-                                <div class="custom-file-upload">
-                                    <input class="form-control form-control-sm" id="file_upload" name="file_upload" type="file" accept=".pdf">
-                                    
-                                    <div id="file-upload-placeholder" class="{% if session.get('quiz_source_name') %}file-selected{% endif %}">
-                                        {% if session.get('quiz_source_name') %}
-                                            <i class="fas fa-check-circle me-2 text-white"></i> File Loaded: <b>{{ session.get('quiz_source_name') }}</b>
-                                        {% else %}
-                                            <i class="fas fa-file-upload me-2"></i> <span>Click or Drag a PDF here</span>
-                                        {% endif %}
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mb-3">
-                                <label for="pasted_text" class="form-label">Or, Paste Notes (max 20k chars):</label>
-                                <textarea class="form-control" id="pasted_text" name="pasted_text" rows="4">{{ session.get('pasted_text', '') }}</textarea>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-section card mb-4">
-                        <div class="card-body">
-                            <h5 class="card-title"><i class="fas fa-sliders-h"></i> Configuration</h5>
-                            <div class="mb-3">
-                                <label for="num_questions" class="form-label">Number of Questions (<span id="q-count">{{ session.get('num_questions', 5) }}</span>)</label>
-                                <input type="range" class="form-range" min="1" max="20" id="num_questions" name="num_questions" value="{{ session.get('num_questions', 5) }}" oninput="document.getElementById('q-count').innerText=this.value">
-                            </div>
-                            <div class="mb-3">
-                                <label for="difficulty_level" class="form-label">Difficulty Level</label>
-                                <select class="form-select" id="difficulty_level" name="difficulty_level">
-                                    <option value="Easy" {% if session.get('difficulty_level', 'Medium') == 'Easy' %}selected{% endif %}>Easy</option>
-                                    <option value="Medium" {% if session.get('difficulty_level', 'Medium') == 'Medium' %}selected{% endif %}>Medium</option>
-                                    <option value="Hard" {% if session.get('difficulty_level', 'Medium') == 'Hard' %}selected{% endif %}>Hard</option>
-                                </select>
-                            </div>
-                        </div>
-                    </div>
-
-                    <button type="submit" id="generate-quiz-btn" class="btn btn-gradient btn-lg w-100">
-                        <i class="fas fa-magic"></i> Generate New Quiz
-                    </button>
-                </form>
-            </div> 
-            </div>
-        <div class="main-content flex-fill" id="main-content">
-            
-            {% if not session.get('quiz_generated') %}
-                <div id="loader-overlay" class="d-none">
-                    <div class="text-center">
-                        <div class="spinner-border text-primary-custom" role="status" style="width: 3rem; height: 3rem;">
-                            <span class="visually-hidden">Loading...</span>
-                        </div>
-                        <p class="mt-3 text-white fw-bold">Generating your custom quiz...</p>
-                    </div>
-                </div>
-            {% endif %}
-
-            {% if session.get('quiz_generated') %}
-                <div class="sticky-quiz-header shadow-sm" id="quiz-header">
-                    <button class="btn btn-toggle-sidebar" id="toggle-sidebar-btn">
-                        <i class="fas fa-chevron-left me-1" id="toggle-icon"></i>
-                        <span id="toggle-text">Hide Panel</span>
-                    </button>
-                    
-                    <a href="{{ url_for('reset_quiz') }}" class="btn btn-home-reset ms-3 me-auto" title="Start New Quiz">
-                        <i class="fas fa-home me-2"></i> New Quiz / Reset
-                    </a>
-                    
-                    <div class="quiz-info">
-                        <h2 class="h5 mb-0 text-primary-custom" id="quiz-title">
-                            {% if session.get('quiz_submitted') %}
-                                <i class="fas fa-scroll"></i> Detailed Answer Review
-                            {% else %}
-                                <i class="fas fa-pencil-alt"></i> Active Quiz
-                            {% endif %}
-                        </h2>
-                        <p class="mb-0 text-muted small">
-                            {{ session['current_quiz'] | length }} Questions | Difficulty: <span class="difficulty-level-tag">{{ session.get('difficulty_level', 'Medium') }}</span>
-                        </p>
-                    </div>
-                </div>
-            {% endif %}
-            
-            <div class="p-5" id="home-content">
-                {% if not session.get('quiz_generated') %}
-                    <header class="app-header mb-5">
-                        <h1 class="display-5 fw-bold">AI Quiz Generator <span class="badge bg-primary-custom-light">PRO</span></h1>
-                    </header>
-                    
-                    <div class="welcome-card p-5 text-center shadow-sm rounded-lg">
-                        <i class="fas fa-microchip text-primary-custom" style="font-size: 3em;"></i>
-                        <h2 class="mt-4 text-primary-custom">Accelerate Your Learning with Quizer</h2>
-                        <p class="lead text-muted mx-auto" style="max-width: 700px;">
-                            Ready to validate your understanding? <br> Use Control Panel to configure your assessment.<br>Our AI will analyze your content and deliver a precision-tailored quiz instantly.
-                        </p>
-                        <hr class="my-4">
-                        <h4 class="text-secondary mt-5 mb-4">Mastery in 3 Simple Steps</h4>
-                        <div class="row text-start process-steps-list mx-auto mt-4">
-                            
-                            <div class="col-md-4 mb-3">
-                                <div class="step-box shadow-sm">
-                                    <i class="fas fa-file-import"></i> 
-                                    <div>
-                                        <div class="fw-bold mb-1">1. Import Content</div> 
-                                        <small class="text-muted">Upload a PDF or paste raw text notes into the source field.</small>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="col-md-4 mb-3">
-                                <div class="step-box shadow-sm">
-                                    <i class="fas fa-chart-bar"></i> 
-                                    <div>
-                                        <div class="fw-bold mb-1">2. Configure Assessment</div> 
-                                        <small class="text-muted">Select the desired question count and knowledge difficulty level.</small>
-                                    </div>
-                                </div>
-                            </div>
-                            
-                            <div class="col-md-4 mb-3">
-                                <div class="step-box shadow-sm">
-                                    <i class="fas fa-brain"></i> 
-                                    <div>
-                                        <div class="fw-bold mb-1">3. Generate Your Quiz</div> 
-                                        <small class="text-muted">Click Generate New Quiz to deploy the AI and start testing.</small>
-                                    </div>
-                                </div>
-                            </div>
-
-                        </div>
-                    </div>
-                {% else %}
-                    <div id="quiz-area" class="mt-5 pt-3">
-                        
-                        {% if session.get('quiz_submitted') %}
-                            <div class="results-summary mb-5 p-4 shadow-lg rounded-lg" id="results-summary">
-                                </div>
-                        {% endif %}
-
-                        <form id="quiz-form">
-                            <div id="questions-container">
-                                </div>
-                            
-                            <hr class="mt-5">
-                            
-                            <div class="d-grid gap-2">
-                                <button type="submit" id="submit-quiz-btn" class="btn btn-gradient btn-lg" 
-                                    {% if session.get('quiz_submitted') %}disabled{% endif %}>
-                                    {% if session.get('quiz_submitted') %}
-                                        Review Mode - Read Only
-                                    {% else %}
-                                        <i class="fas fa-check-double"></i> Submit Quiz & Get Results
-                                    {% endif %}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                {% endif %}
-            </div> 
+    <div id="loader-overlay">
+        <div class="loader-content">
+            <img src="{{ url_for('static', filename='logo.png') }}" alt="Loading Logo" class="loader-logo">
+            <div class="ai-loader-ring"></div>
         </div>
+        <p class="mt-4 fw-bold text-center">AI is analyzing your content...<br><span
+                class="text-secondary small">Generating precision questions</span></p>
     </div>
 
+    <div id="sidebar-backdrop" class="sidebar-backdrop"></div>
+
+    <div class="main-wrapper {% if session.get('quiz_generated') %}quiz-active{% endif %}" id="main-wrapper">
+
+        <!-- --- Sidebar Control Panel --- -->
+        <aside class="sidebar shadow-lg" id="sidebar">
+            <div class="logo-container">
+                <img src="{{ url_for('static', filename='logo.png') }}" alt="Quizer Pro Logo" class="sidebar-logo">
+            </div>
+
+            <div class="sidebar-scrollable">
+                <h4 class="sidebar-heading">Quiz Engine</h4>
+
+                {% if error %}
+                <div class="alert alert-danger mb-4 rounded-pill px-4 border-0 shadow-sm" role="alert">
+                    <i class="fas fa-exclamation-circle me-2"></i> {{ error }}
+                </div>
+                {% endif %}
+
+                <form method="POST" enctype="multipart/form-data" action="{{ url_for('index') }}"
+                    id="quiz-generation-form">
+                    <div class="mb-4">
+                        <label class="form-label">Knowledge Source</label>
+                        <div class="upload-zone" id="drop-zone">
+                            <i class="fas fa-cloud-upload-alt upload-icon"></i>
+                            <input class="form-control form-control-sm" id="file_upload" name="file_upload" type="file"
+                                accept=".pdf"
+                                style="position: absolute; inset: 0; opacity: 0; cursor: pointer; z-index: 10;">
+                            <div id="file-upload-placeholder">
+                                {% if session.get('quiz_source_name') %}
+                                <h6 class="text-primary fw-bold mb-1"><i class="fas fa-file-pdf me-2"></i>Attached</h6>
+                                <p class="mb-0 small text-secondary text-truncate">{{ session.get('quiz_source_name') }}
+                                </p>
+                                {% else %}
+                                <h6 class="fw-bold mb-1">Click or Drag PDF</h6>
+                                <p class="mb-0 small text-tertiary">Max size 10MB</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="pasted_text" class="form-label">Or Paste Study Notes</label>
+                        <textarea class="form-control" id="pasted_text" name="pasted_text" rows="5"
+                            placeholder="Paste your raw text here...">{{ session.get('pasted_text', '') }}</textarea>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label d-flex justify-content-between align-items-center">
+                            <span>Questions Count</span>
+                            <span id="q-count-display" class="q-count-badge">{{ session.get('num_questions', 5)
+                                }}</span>
+                        </label>
+                        <div class="q-stepper">
+                            <button type="button" class="q-stepper-btn" id="q-minus">&#8722;</button>
+                            <div class="q-stepper-track">
+                                <div class="q-stepper-fill" id="q-stepper-fill"></div>
+                            </div>
+                            <button type="button" class="q-stepper-btn" id="q-plus">&#43;</button>
+                            <input type="hidden" id="num_questions" name="num_questions"
+                                value="{{ session.get('num_questions', 5) }}" min="1" max="25">
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label">Intelligence Level</label>
+                        <div class="difficulty-pills" id="difficulty-pills">
+                            <button type="button"
+                                class="diff-pill {% if session.get('difficulty_level', 'Medium') == 'Easy' %}active{% endif %}"
+                                data-value="Easy">
+                                <span class="diff-dot"></span> Easy
+                            </button>
+                            <button type="button"
+                                class="diff-pill {% if session.get('difficulty_level', 'Medium') == 'Medium' %}active{% endif %}"
+                                data-value="Medium">
+                                <span class="diff-dot"></span> Medium
+                            </button>
+                            <button type="button"
+                                class="diff-pill {% if session.get('difficulty_level', 'Medium') == 'Hard' %}active{% endif %}"
+                                data-value="Hard">
+                                <span class="diff-dot"></span> Hard
+                            </button>
+                        </div>
+                        <input type="hidden" id="difficulty_level" name="difficulty_level"
+                            value="{{ session.get('difficulty_level', 'Medium') }}">
+                    </div>
+
+                    <button type="submit" id="generate-quiz-btn" class="btn-premium w-100 mt-2">
+                        <span>Generate Quiz</span>
+                        <i class="fas fa-chevron-right"></i>
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- --- Main Content Area --- -->
+        <main class="main-content" id="main-content">
+
+            <header class="sticky-quiz-header">
+                <div class="header-left d-flex align-items-center gap-3">
+                    <button id="sidebar-toggle" class="btn-sidebar-toggle">
+                        <i class="fas fa-indent"></i>
+                        <span>Hide Panel</span>
+                    </button>
+                    {% if session.get('quiz_generated') %}
+                    <a href="{{ url_for('reset_quiz') }}" class="btn-premium py-2 px-4 shadow-none"
+                        style="font-size: 0.85rem;">
+                        <i class="fas fa-plus"></i> New Session
+                    </a>
+                    {% endif %}
+                </div>
+
+                <div class="header-right d-flex align-items-center gap-3">
+                    <button id="theme-toggle" class="btn-theme-toggle" title="Switch Theme">
+                        <i class="fas fa-moon" id="theme-icon"></i>
+                    </button>
+                </div>
+            </header>
+
+            <div class="container-fluid p-4 p-md-5" id="home-content">
+                {% if not session.get('quiz_generated') %}
+                <!-- --- Welcome / Landing Section --- -->
+                <div class="max-w-4xl mx-auto text-center py-5">
+                    <img src="{{ url_for('static', filename='logo.png') }}" alt="Quizer Pro"
+                        class="home-hero-logo mb-4">
+                    <h1 class="display-3 fw-800 mb-4 logo-text">Transform Content into Knowledge.</h1>
+                    <p class="lead text-secondary mb-5 mx-auto" style="max-width: 700px;">
+                        The professional's tool for instant, AI-tailored assessment. Analyze any text or PDF and
+                        generate precision-engineered quizzes in seconds.
+                    </p>
+
+                    <div class="row g-4 mt-5 text-start">
+                        <div class="col-lg-4">
+                            <div class="card h-100">
+                                <div class="mb-3"><i class="fas fa-file-pdf fa-2x text-primary"></i></div>
+                                <h5 class="fw-bold">Smart Analysis</h5>
+                                <p class="text-secondary small mb-0">Our AI parses complex documents to extract key
+                                    concepts and learning objectives.</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="card h-100">
+                                <div class="mb-3"><i class="fas fa-sliders-h fa-2x text-secondary"></i></div>
+                                <h5 class="fw-bold">Custom Control</h5>
+                                <p class="text-secondary small mb-0">Fine-tune difficulty and depth to match your
+                                    specific learning goals.</p>
+                            </div>
+                        </div>
+                        <div class="col-lg-4">
+                            <div class="card h-100">
+                                <div class="mb-3"><i class="fas fa-brain fa-2x text-tertiary"></i></div>
+                                <h5 class="fw-bold">Active Mastery</h5>
+                                <p class="text-secondary small mb-0">Validate your understanding through interactive,
+                                    application-focused assessments.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% else %}
+                <!-- --- Quiz Playground Section --- -->
+                <div class="quiz-playground max-w-4xl mx-auto">
+                    <div class="playground-header">
+                        <h2 class="display-5 fw-bold mb-2">Live Assessment</h2>
+                        <p class="text-muted">Analyzing: <span class="text-primary fw-bold">{{
+                                session.get('quiz_source_name', 'Pasted Content') }}</span></p>
+
+                        <div class="progress-container">
+                            <div class="progress-bar" id="quiz-progress-bar"></div>
+                        </div>
+                        <div class="d-flex justify-content-between text-muted small fw-bold">
+                            <span id="progress-text">0% Completed</span>
+                            <span id="question-counter">0 / {{ session['current_quiz'] | length }}</span>
+                        </div>
+                    </div>
+
+                    {% if session.get('quiz_submitted') %}
+                    <div id="results-summary" class="mb-5"></div>
+                    {% endif %}
+
+                    <form id="quiz-form">
+                        <div id="questions-container">
+                            <!-- Questions will be injected here by script.js -->
+                        </div>
+
+                        <div class="sticky-bottom-action mt-5 text-center">
+                            <button type="submit" id="submit-quiz-btn" class="btn-premium btn-lg w-100 shadow-lg" {% if
+                                session.get('quiz_submitted') %}disabled{% endif %}>
+                                {% if session.get('quiz_submitted') %}
+                                <i class="fas fa-lock me-2"></i> Review Mode Only
+                                {% else %}
+                                <i class="fas fa-rocket me-2"></i> Submit Final Assessment
+                                {% endif %}
+                            </button>
+                        </div>
+                    </form>
+                </div>
+                {% endif %}
+            </div>
+        </main>
+    </div>
+
+    <!-- --- Pass Server Data to JS --- -->
     <script>
-        // Note: These variables are correctly passed from the server for script.js
         const QUIZ_DATA = {{ session['current_quiz'] | tojson if session.get('current_quiz') else '[]' }};
         const IS_SUBMITTED = {{ 'true' if session.get('quiz_submitted') else 'false' }};
         const USER_ANSWERS = {{ session['user_answers'] | tojson if session.get('user_answers') else '{}' }};
@@ -205,4 +235,5 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{{ url_for('static', filename='script.js') }}"></script>
 </body>
+
 </html>

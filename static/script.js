@@ -1,342 +1,367 @@
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     const questionsContainer = document.getElementById('questions-container');
     const quizForm = document.getElementById('quiz-form');
+    const themeToggle = document.getElementById('theme-toggle');
+    const themeIcon = document.getElementById('theme-icon');
+    const loaderOverlay = document.getElementById('loader-overlay');
+    const generationForm = document.getElementById('quiz-generation-form');
+    const progressBar = document.getElementById('quiz-progress-bar');
+    const progressText = document.getElementById('progress-text');
+    const questionCounter = document.getElementById('question-counter');
+
+    // --- Theme Switching ---
+    const currentTheme = localStorage.getItem('theme') || 'light';
+    document.documentElement.setAttribute('data-theme', currentTheme);
+    updateThemeIcon(currentTheme);
+
+    // --- Sidebar Toggle Logic ---
+    const sidebarToggle = document.getElementById('sidebar-toggle');
     const mainWrapper = document.getElementById('main-wrapper');
     const sidebar = document.getElementById('sidebar');
-    const toggleSidebarBtn = document.getElementById('toggle-sidebar-btn');
-    const toggleIcon = document.getElementById('toggle-icon');
-    const toggleText = document.getElementById('toggle-text');
-    
-    // --- NEW LOADER ELEMENTS ---
-    const generationForm = document.getElementById('quiz-generation-form');
-    const mainContent = document.getElementById('main-content');
-    const generateQuizBtn = document.getElementById('generate-quiz-btn');
-    // ---------------------------
-    
-    // --- Custom Dropdown Elements
-    const difficultyDropdownButton = document.getElementById('difficultyDropdownButton');
-    const difficultyHiddenInput = document.getElementById('difficulty_level'); 
-    const difficultyOptions = document.querySelectorAll('.difficulty-select-option');
-    // ---------------------------------
-    
-    // --- File Upload Elements ---
-    const fileUploadInput = document.getElementById('file_upload');
-    const filePlaceholder = document.getElementById('file-upload-placeholder');
-    // ---------------------------------
+    const backdrop = document.getElementById('sidebar-backdrop');
 
-    let userSelections = {}; 
-    
-    // Function to apply the correct color class to the button and hidden input
-    function updateDifficultyVisuals(value) {
-        const lowerValue = value.toLowerCase();
-        
-        if (!difficultyDropdownButton || !difficultyHiddenInput) return;
+    if (sidebarToggle && mainWrapper && sidebar && backdrop) {
+        const toggleSidebar = () => {
+            const isMobile = window.innerWidth <= 768;
 
-        // 1. Update Hidden Input Value (Used for Form Submission)
-        difficultyHiddenInput.value = value;
-        
-        // 2. Update Button Text and Value Attribute
-        difficultyDropdownButton.textContent = value;
-        difficultyDropdownButton.dataset.selectedValue = value;
-
-        // 3. Update Button Classes for Styling 
-        difficultyDropdownButton.classList.remove('difficulty-low', 'difficulty-medium', 'difficulty-high');
-        difficultyDropdownButton.classList.add(`difficulty-${lowerValue}`);
-
-        // 4. Update Menu Item Active State 
-        difficultyOptions.forEach(option => {
-            option.classList.remove('active');
-            if (option.dataset.value === value) {
-                option.classList.add('active');
-            }
-        });
-    }
-
-    // Event listener for when an item in the custom menu is clicked
-    difficultyOptions.forEach(option => {
-        option.addEventListener('click', function(e) {
-            e.preventDefault();
-            const selectedValue = this.dataset.value;
-            updateDifficultyVisuals(selectedValue);
-        });
-    });
-
-    // Initialize state on load
-    if (difficultyDropdownButton && difficultyHiddenInput) {
-        updateDifficultyVisuals(difficultyHiddenInput.value || 'Low'); 
-    }
-    // --- END Difficulty Dropdown Custom Logic ---
-    
-    
-    // --- Sidebar Toggle Logic ---
-    
-    function isMobileView() {
-        return window.matchMedia("(max-width: 768px)").matches;
-    }
-
-    function updateToggleVisuals() {
-        if (isMobileView()) {
-            const isVisible = sidebar.classList.contains('collapsed');
-            if (isVisible) {
-                toggleIcon.className = 'fas fa-chevron-left me-1';
-                toggleText.textContent = 'Hide Panel';
-            } else {
-                toggleIcon.className = 'fas fa-chevron-right me-1';
-                toggleText.textContent = 'Show Panel';
-            }
-        } else {
-            const isHidden = mainWrapper.classList.contains('sidebar-hidden'); 
-            if (isHidden) {
-                toggleIcon.className = 'fas fa-chevron-right me-1';
-                toggleText.textContent = 'Show Panel';
-            } else {
-                toggleIcon.className = 'fas fa-chevron-left me-1';
-                toggleText.textContent = 'Hide Panel';
-            }
-        }
-    }
-
-    if (toggleSidebarBtn) {
-        updateToggleVisuals();
-        
-        toggleSidebarBtn.addEventListener('click', function() {
-            if (isMobileView()) {
-                sidebar.classList.toggle('collapsed');
+            if (isMobile) {
+                sidebar.classList.toggle('mobile-active');
+                backdrop.classList.toggle('active');
+                // Force remove desktop hidden class on mobile
+                mainWrapper.classList.remove('sidebar-hidden');
             } else {
                 mainWrapper.classList.toggle('sidebar-hidden');
+                const isHidden = mainWrapper.classList.contains('sidebar-hidden');
+                const span = sidebarToggle.querySelector('span');
+                const icon = sidebarToggle.querySelector('i');
+
+                if (isHidden) {
+                    if (span) span.textContent = 'Show Panel';
+                    if (icon) icon.className = 'fas fa-outdent';
+                } else {
+                    if (span) span.textContent = 'Hide Panel';
+                    if (icon) icon.className = 'fas fa-indent';
+                }
             }
-            updateToggleVisuals();
-        });
-        
-        window.addEventListener('resize', updateToggleVisuals);
-    }
-    
-    
-    // --- Quiz Generation Submission & Loader Logic 
-    if (generationForm && mainContent && generateQuizBtn) {
-        generationForm.addEventListener('submit', function(e) {
-            
-            // 1. Apply loading state to main-content (triggers blur and shows overlay)
-            mainContent.classList.add('loading');
-            
-            // 2. Visually update the button to show a spinner and disable it
-            generateQuizBtn.disabled = true;
-            generateQuizBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Generating...';
-            
-            // Allow the form to submit normally
+        };
+
+        sidebarToggle.addEventListener('click', toggleSidebar);
+        backdrop.addEventListener('click', toggleSidebar);
+
+        window.addEventListener('resize', () => {
+            if (window.innerWidth > 768) {
+                sidebar.classList.remove('mobile-active');
+                backdrop.classList.remove('active');
+            }
         });
     }
-    // --- END Quiz Generation Submission & Loader Logic ---
 
-
-    
-    // --- File Upload Handler ---
-    if (fileUploadInput && filePlaceholder) {
-        fileUploadInput.addEventListener('change', function() {
-            if (this.files.length > 0) {
-                filePlaceholder.innerHTML = `<i class="fas fa-check-circle me-2 text-white"></i> File Selected: <b>${this.files[0].name}</b>`;
-                filePlaceholder.classList.add('file-selected');
+    // --- File Upload Name Display ---
+    const fileInput = document.getElementById('file_upload');
+    const filePlaceholder = document.getElementById('file-upload-placeholder');
+    if (fileInput && filePlaceholder) {
+        fileInput.addEventListener('change', function () {
+            if (this.files && this.files.length > 0) {
+                const fileName = this.files[0].name;
+                filePlaceholder.innerHTML = `
+                    <h6 class="text-primary fw-bold mb-1"><i class="fas fa-file-pdf me-2"></i>Attached</h6>
+                    <p class="mb-0 small text-secondary text-truncate">${fileName}</p>
+                `;
             } else {
-                filePlaceholder.innerHTML = `<i class="fas fa-file-upload me-2"></i> <span>Click or Drag a PDF here</span>`;
-                filePlaceholder.classList.remove('file-selected');
+                filePlaceholder.innerHTML = `
+                    <h6 class="fw-bold mb-1">Click or Drag PDF</h6>
+                    <p class="mb-0 small text-tertiary">Max size 10MB</p>
+                `;
             }
         });
     }
 
-    // --- Data Initialization 
-    if (typeof QUIZ_DATA !== 'undefined' && typeof USER_ANSWERS !== 'undefined') {
-        QUIZ_DATA.forEach((q, i) => {
-            const selectedIndex = USER_ANSWERS[i.toString()];
-            if (selectedIndex !== null && selectedIndex !== undefined) {
-                userSelections[i] = q.answerOptions[selectedIndex].text;
-            }
+    if (themeToggle) {
+        themeToggle.addEventListener('click', () => {
+            const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            updateThemeIcon(theme);
         });
-    }
 
-    // --- Core Rendering Function 
-    function renderQuiz() {
-        if (!QUIZ_DATA || QUIZ_DATA.length === 0) {
-            return;
+        // --- Question Stepper Logic ---
+        const qMinusBtn = document.getElementById('q-minus');
+        const qPlusBtn = document.getElementById('q-plus');
+        const qCountDisplay = document.getElementById('q-count-display');
+        const qStepperTrack = document.querySelector('.q-stepper-track');
+        const qStepperFill = document.getElementById('q-stepper-fill');
+        const qInput = document.getElementById('num_questions');
+        if (qMinusBtn && qPlusBtn && qCountDisplay && qStepperTrack && qStepperFill && qInput) {
+            const updateStepper = (value) => {
+                const max = parseInt(qInput.max) || 25;
+                const min = parseInt(qInput.min) || 1;
+                const clamped = Math.min(Math.max(value, min), max);
+                qInput.value = clamped;
+                qCountDisplay.textContent = clamped;
+                const percent = ((clamped - min) / (max - min)) * 100;
+                qStepperFill.style.width = `${percent}%`;
+            };
+
+            let isDragging = false;
+
+            const handleTrackInteraction = (e) => {
+                const rect = qStepperTrack.getBoundingClientRect();
+                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+                const x = clientX - rect.left;
+                const percent = Math.min(Math.max(x / rect.width, 0), 1);
+                const max = parseInt(qInput.max) || 25;
+                const min = parseInt(qInput.min) || 1;
+                const value = Math.round(min + (max - min) * percent);
+                updateStepper(value);
+            };
+
+            qMinusBtn.addEventListener('click', () => updateStepper(parseInt(qInput.value) - 1));
+            qPlusBtn.addEventListener('click', () => updateStepper(parseInt(qInput.value) + 1));
+
+            // Mouse Interaction
+            qStepperTrack.addEventListener('mousedown', (e) => {
+                isDragging = true;
+                handleTrackInteraction(e);
+            });
+
+            window.addEventListener('mousemove', (e) => {
+                if (isDragging) handleTrackInteraction(e);
+            });
+
+            window.addEventListener('mouseup', () => {
+                isDragging = false;
+            });
+
+            // Touch Interaction
+            qStepperTrack.addEventListener('touchstart', (e) => {
+                isDragging = true;
+                handleTrackInteraction(e);
+            }, { passive: true });
+
+            window.addEventListener('touchmove', (e) => {
+                if (isDragging) handleTrackInteraction(e);
+            }, { passive: true });
+
+            window.addEventListener('touchend', () => {
+                isDragging = false;
+            });
+
+            // Initialize stepper width
+            updateStepper(parseInt(qInput.value));
         }
 
-        questionsContainer.innerHTML = ''; 
+        // --- Difficulty Pill Logic ---
+        const diffPills = document.querySelectorAll('.diff-pill');
+        const diffInput = document.getElementById('difficulty_level');
+        if (diffPills.length && diffInput) {
+            diffPills.forEach(pill => {
+                pill.addEventListener('click', () => {
+                    diffPills.forEach(p => p.classList.remove('active'));
+                    pill.classList.add('active');
+                    diffInput.value = pill.getAttribute('data-value');
+                });
+            });
+        }
+    }
+
+    function updateThemeIcon(theme) {
+        if (!themeIcon) return;
+        themeIcon.className = (theme === 'dark') ? 'fas fa-sun' : 'fas fa-moon';
+    }
+
+    // --- Loading Overlay ---
+    if (generationForm && loaderOverlay) {
+        generationForm.addEventListener('submit', () => {
+            loaderOverlay.classList.add('active');
+        });
+    }
+
+    // --- Quiz Logic State ---
+    let userSelections = {};
+
+    // Initialize selections from session if they exist
+    if (typeof QUIZ_DATA !== 'undefined' && typeof USER_ANSWERS !== 'undefined') {
+        Object.entries(USER_ANSWERS).forEach(([key, val]) => {
+            if (val !== null && val !== undefined && QUIZ_DATA[key]) {
+                userSelections[key] = QUIZ_DATA[key].answerOptions[val].text;
+            }
+        });
+        updateProgress();
+    }
+
+    function updateProgress() {
+        if (!QUIZ_DATA || QUIZ_DATA.length === 0 || !progressBar) return;
+
+        const total = QUIZ_DATA.length;
+        const answered = Object.keys(userSelections).length;
+        const percentage = Math.round((answered / total) * 100);
+
+        progressBar.style.width = `${percentage}%`;
+        if (progressText) progressText.textContent = `${percentage}% Completed`;
+        if (questionCounter) questionCounter.textContent = `${answered} / ${total}`;
+    }
+
+    function renderQuiz() {
+        if (!QUIZ_DATA || QUIZ_DATA.length === 0 || !questionsContainer) return;
+
+        questionsContainer.innerHTML = '';
 
         QUIZ_DATA.forEach((question, qIndex) => {
             const card = document.createElement('div');
-            card.className = 'question-card';
-            
-            card.innerHTML += `<div class="question-text">${qIndex + 1}. ${question.question}</div>`;
+            card.className = 'question-card card';
+            card.style.animationDelay = `${qIndex * 0.1}s`;
 
-            question.answerOptions.forEach((option) => {
-                const isCorrect = option.isCorrect;
+            card.innerHTML += `<div class="question-title">${qIndex + 1}. ${question.question}</div>`;
+
+            const optionGrid = document.createElement('div');
+            optionGrid.className = 'option-grid';
+
+            question.answerOptions.forEach((option, oIndex) => {
                 const isSelected = userSelections[qIndex] === option.text;
+                const pill = document.createElement('div');
+                pill.className = 'option-pill';
+                if (isSelected) pill.classList.add('active');
 
-                let cssClass = 'option-box';
-                let iconHTML = ''; 
-                
+                const letter = String.fromCharCode(65 + oIndex); // A, B, C, D...
+
+                // Review Mode Logic
                 if (typeof IS_SUBMITTED !== 'undefined' && IS_SUBMITTED) {
-                    if (isCorrect) {
-                        cssClass += ' correct';
-                        iconHTML = '<i class="fas fa-check-circle"></i> ';
+                    if (option.isCorrect) {
+                        pill.classList.add('correct');
+                        pill.innerHTML = `
+                            <div class="option-indicator active">${letter}</div>
+                            <span class="flex-grow-1">${option.text}</span>
+                            <i class="fas fa-check-circle option-status-icon"></i>
+                        `;
                     } else if (isSelected) {
-                        cssClass += ' incorrect';
-                        iconHTML = '<i class="fas fa-times-circle"></i> ';
+                        pill.classList.add('incorrect');
+                        pill.innerHTML = `
+                            <div class="option-indicator active danger">${letter}</div>
+                            <span class="flex-grow-1">${option.text}</span>
+                            <i class="fas fa-times-circle option-status-icon"></i>
+                        `;
                     } else {
-                        iconHTML = '<i class="far fa-circle"></i> ';
+                        pill.innerHTML = `
+                            <div class="option-indicator">${letter}</div>
+                            <span class="flex-grow-1">${option.text}</span>
+                        `;
                     }
-                    
-                    card.innerHTML += `<div class="${cssClass}"><b>${iconHTML}</b> ${option.text}</div>`;
                 } else {
-                    cssClass += isSelected ? ' selected' : '';
-                    iconHTML = ''; 
-
-                    const optionHTML = `
-                        <label class="${cssClass}" data-q-index="${qIndex}" data-option-text="${option.text}">
-                            <input type="radio" name="q_${qIndex}" value="${option.text}" ${isSelected ? 'checked' : ''}>
-                            ${option.text}
-                        </label>
+                    // Active Selection Logic
+                    pill.innerHTML = `
+                        <div class="option-indicator">${letter}</div>
+                        <span class="flex-grow-1">${option.text}</span>
                     `;
-                    card.innerHTML += optionHTML;
+                    pill.addEventListener('click', function () {
+                        const allPills = optionGrid.querySelectorAll('.option-pill');
+                        allPills.forEach(p => p.classList.remove('active'));
+                        this.classList.add('active');
+                        userSelections[qIndex] = option.text;
+                        updateProgress();
+                    });
                 }
+                optionGrid.appendChild(pill);
             });
 
+            card.appendChild(optionGrid);
+
+            // Hint / Rationale Section
+            const hintContainer = document.createElement('div');
+            hintContainer.className = 'mt-4 pt-4 border-top';
+
+            const hintBtn = document.createElement('button');
+            hintBtn.type = 'button';
+            hintBtn.className = 'btn btn-link p-0 text-decoration-none fw-bold text-primary';
+            hintBtn.innerHTML = (typeof IS_SUBMITTED !== 'undefined' && IS_SUBMITTED) ?
+                '<i class="fas fa-comment-alt me-2"></i> View Expert Rationale' :
+                '<i class="fas fa-lightbulb me-2"></i> Reveal a Hint';
+
+            const hintBox = document.createElement('div');
+            hintBox.className = 'hint-box d-none animate-fade-in';
             const correctOption = question.answerOptions.find(opt => opt.isCorrect);
-            const explanation = `
-                <div class="accordion mt-3" id="accordionHint${qIndex}">
-                    <div class="accordion-item">
-                        <h2 class="accordion-header">
-                            <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#collapse${qIndex}" aria-expanded="false" aria-controls="collapse${qIndex}">
-                                ${typeof IS_SUBMITTED !== 'undefined' && IS_SUBMITTED ? '<i class="fas fa-info-circle"></i> Show Explanation & Rationale' : '<i class="fas fa-lightbulb"></i> Get a Hint'}
-                            </button>
-                        </h2>
-                        <div id="collapse${qIndex}" class="accordion-collapse collapse" data-bs-parent="#accordionHint${qIndex}">
-                            <div class="accordion-body">
-                                ${typeof IS_SUBMITTED !== 'undefined' && IS_SUBMITTED ? `<p><strong>Correct Answer Rationale:</strong> ${correctOption.rationale}</p>` : ''}
-                                <p><strong>Study Hint:</strong> ${question.hint || 'Hint not available for this question.'}</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            hintBox.innerHTML = `
+                ${(typeof IS_SUBMITTED !== 'undefined' && IS_SUBMITTED) ? `<p class="mb-2"><strong>Rationale:</strong> ${correctOption.rationale}</p>` : ''}
+                <p class="mb-0"><strong>Hint:</strong> ${question.hint || 'Carefully analyze the context of the question.'}</p>
             `;
-            card.innerHTML += explanation;
+
+            hintBtn.addEventListener('click', () => {
+                hintBox.classList.toggle('d-none');
+            });
+
+            hintContainer.appendChild(hintBtn);
+            hintContainer.appendChild(hintBox);
+            card.appendChild(hintContainer);
 
             questionsContainer.appendChild(card);
         });
-        
-        if (typeof IS_SUBMITTED === 'undefined' || !IS_SUBMITTED) {
-            attachEventListeners();
-        }
     }
 
-    // --- Active Quiz Event Handlers 
-    function attachEventListeners() {
-        questionsContainer.addEventListener('click', (event) => {
-            const optionBox = event.target.closest('.option-box');
-            if (optionBox) {
-                const radio = optionBox.querySelector('input[type="radio"]');
-                if (radio) {
-                    radio.checked = true;
-                    
-                    const qIndex = radio.name.split('_')[1];
-                    userSelections[qIndex] = radio.value;
-
-                    document.querySelectorAll(`[name="q_${qIndex}"]`).forEach(input => {
-                        const label = input.closest('.option-box');
-                        label.classList.remove('selected');
-                    });
-                    optionBox.classList.add('selected');
-                }
-            }
-        });
-    }
-
-    // --- Submission Handler 
+    // --- Submission ---
     if (quizForm) {
-        quizForm.addEventListener('submit', function(e) {
+        quizForm.addEventListener('submit', function (e) {
             e.preventDefault();
-            
             if (typeof IS_SUBMITTED !== 'undefined' && IS_SUBMITTED) return;
 
             const submitBtn = document.getElementById('submit-quiz-btn');
             submitBtn.disabled = true;
-            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Submitting...';
+            submitBtn.classList.add('opacity-50');
+            submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span> Processing Results...';
 
             fetch('/submit_quiz', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
+                headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ answers: userSelections })
             })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    window.location.reload(); 
-                } else {
-                    console.error('Submission error from backend:', data.error);
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) window.location.reload();
+                    else {
+                        submitBtn.disabled = false;
+                        submitBtn.classList.remove('opacity-50');
+                        submitBtn.innerHTML = 'Retry Submission';
+                    }
+                })
+                .catch(() => {
                     submitBtn.disabled = false;
-                    submitBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Submission Failed';
-                }
-            })
-            .catch(error => {
-                console.error('Network error during submission:', error);
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Submission Failed';
-            });
+                    submitBtn.classList.remove('opacity-50');
+                    submitBtn.innerHTML = 'Retry Submission';
+                });
         });
     }
 
-    // --- Results Summary Function 
+    // --- Results Summary Rendering ---
     function renderResultsSummary() {
         const resultsSummary = document.getElementById('results-summary');
         if (!resultsSummary || typeof IS_SUBMITTED === 'undefined' || !IS_SUBMITTED) return;
 
-        const totalQuestions = QUIZ_DATA.length;
+        const total = QUIZ_DATA.length;
         const score = SCORE;
-        const percentage = (score / totalQuestions) * 100;
-        
-        let insight = "Needs Review! Focus on the rationale below.";
-        let icon = "times-circle";
+        const percent = Math.round((score / total) * 100);
 
-        if (percentage >= 80) {
-            insight = "Mastery Achieved! You crushed it. 🎉";
-            icon = "trophy";
-        } else if (percentage >= 50) {
-            insight = "Solid Effort! Review your incorrect answers.";
-            icon = "check-double";
-        }
+        let gradeColor = '#ef4444'; // Red
+        let title = "Needs Focus";
+        if (percent >= 80) { gradeColor = '#10b981'; title = "Mastery Achieved! 🏆"; }
+        else if (percent >= 60) { gradeColor = '#f59e0b'; title = "Strong Progress"; }
 
-        const html = `
-            <div class="row align-items-center">
-                <div class="col-md-4 text-center border-end">
-                    <h5 class="text-muted mb-0">Final Score</h5>
-                    <h1 class="display-3 text-primary-custom">${score} / ${totalQuestions}</h1>
-                    <p class="lead text-success">${percentage.toFixed(1)}%</p>
-                </div>
-                <div class="col-md-8">
-                    <div class="p-3">
-                        <h4 class="mb-2 text-primary-custom"><i class="fas fa-${icon}"></i> Learning Insight:</h4>
-                        <p class="lead">${insight}</p>
-                        <div class="progress" style="height: 15px;">
-                            <div class="progress-bar bg-success" role="progressbar" style="width: ${percentage}%" aria-valuenow="${percentage}" aria-valuemin="0" aria-valuemax="100"></div>
-                            <div class="progress-bar bg-danger" role="progressbar" style="width: ${100 - percentage}%" aria-valuenow="${100 - percentage}" aria-valuemin="0" aria-valuemax="100"></div>
+        resultsSummary.innerHTML = `
+            <div class="card border-0 shadow-lg text-white mb-5 overflow-hidden" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%)">
+                <div class="row align-items-center">
+                    <div class="col-md-5 p-5 text-center border-md-end border-white border-opacity-10">
+                        <div class="display-1 fw-800" style="color: ${gradeColor}">${score}<span class="fs-2 opacity-50">/${total}</span></div>
+                        <div class="h5 mt-2 fw-bold opacity-75">${percent}% Accurate</div>
+                    </div>
+                    <div class="col-md-7 p-5">
+                        <h2 class="fw-bold mb-3">${title}</h2>
+                        <p class="opacity-75 mb-4">Review the detailed assessment below. Focus on the expert rationales to bridge your knowledge gaps.</p>
+                        <div class="progress bg-white bg-opacity-10" style="height: 12px; border-radius: 6px;">
+                            <div class="progress-bar" style="width: ${percent}%; background: ${gradeColor}"></div>
                         </div>
-                        <small class="text-muted mt-1 d-block">Correct: ${percentage.toFixed(0)}% | Incorrect: ${(100 - percentage).toFixed(0)}%</small>
                     </div>
                 </div>
             </div>
         `;
-
-        resultsSummary.innerHTML = html;
     }
 
-
-    // --- Application Bootstrapping 
-    if (typeof QUIZ_DATA !== 'undefined' && QUIZ_DATA && QUIZ_DATA.length > 0) {
-        renderQuiz();
-    }
-    
-    if (typeof IS_SUBMITTED !== 'undefined' && IS_SUBMITTED) {
-        renderResultsSummary();
-    }
+    if (typeof QUIZ_DATA !== 'undefined' && QUIZ_DATA.length > 0) renderQuiz();
+    if (typeof IS_SUBMITTED !== 'undefined' && IS_SUBMITTED) renderResultsSummary();
 });
