@@ -1,8 +1,7 @@
 document.addEventListener('DOMContentLoaded', function () {
     const questionsContainer = document.getElementById('questions-container');
     const quizForm = document.getElementById('quiz-form');
-    const themeToggle = document.getElementById('theme-toggle');
-    const themeIcon = document.getElementById('theme-icon');
+
     const loaderOverlay = document.getElementById('loader-overlay');
     const generationForm = document.getElementById('quiz-generation-form');
     const progressBar = document.getElementById('quiz-progress-bar');
@@ -12,7 +11,26 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- Theme Switching ---
     const currentTheme = localStorage.getItem('theme') || 'light';
     document.documentElement.setAttribute('data-theme', currentTheme);
-    updateThemeIcon(currentTheme);
+
+    function updateThemeIcons(theme) {
+        const icons = document.querySelectorAll('.btn-theme-toggle i');
+        icons.forEach(icon => {
+            icon.className = (theme === 'dark') ? 'fas fa-sun' : 'fas fa-moon';
+        });
+    }
+
+    const themeToggles = document.querySelectorAll('.btn-theme-toggle');
+    themeToggles.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            updateThemeIcons(theme);
+        });
+    });
+
+    // Initial theme sync
+    updateThemeIcons(currentTheme);
 
     // --- Sidebar Toggle Logic ---
     const sidebarToggle = document.getElementById('sidebar-toggle');
@@ -76,97 +94,83 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    if (themeToggle) {
-        themeToggle.addEventListener('click', () => {
-            const theme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-            document.documentElement.setAttribute('data-theme', theme);
-            localStorage.setItem('theme', theme);
-            updateThemeIcon(theme);
+    // --- Question Stepper Logic ---
+    const qMinusBtn = document.getElementById('q-minus');
+    const qPlusBtn = document.getElementById('q-plus');
+    const qCountDisplay = document.getElementById('q-count-display');
+    const qStepperTrack = document.querySelector('.q-stepper-track');
+    const qStepperFill = document.getElementById('q-stepper-fill');
+    const qInput = document.getElementById('num_questions');
+    if (qMinusBtn && qPlusBtn && qCountDisplay && qStepperTrack && qStepperFill && qInput) {
+        const updateStepper = (value) => {
+            const max = parseInt(qInput.max) || 25;
+            const min = parseInt(qInput.min) || 1;
+            const clamped = Math.min(Math.max(value, min), max);
+            qInput.value = clamped;
+            qCountDisplay.textContent = clamped;
+            const percent = ((clamped - min) / (max - min)) * 100;
+            qStepperFill.style.width = `${percent}%`;
+        };
+
+        let isDragging = false;
+
+        const handleTrackInteraction = (e) => {
+            const rect = qStepperTrack.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const x = clientX - rect.left;
+            const percent = Math.min(Math.max(x / rect.width, 0), 1);
+            const max = parseInt(qInput.max) || 25;
+            const min = parseInt(qInput.min) || 1;
+            const value = Math.round(min + (max - min) * percent);
+            updateStepper(value);
+        };
+
+        qMinusBtn.addEventListener('click', () => updateStepper(parseInt(qInput.value) - 1));
+        qPlusBtn.addEventListener('click', () => updateStepper(parseInt(qInput.value) + 1));
+
+        // Mouse Interaction
+        qStepperTrack.addEventListener('mousedown', (e) => {
+            isDragging = true;
+            handleTrackInteraction(e);
         });
 
-        // --- Question Stepper Logic ---
-        const qMinusBtn = document.getElementById('q-minus');
-        const qPlusBtn = document.getElementById('q-plus');
-        const qCountDisplay = document.getElementById('q-count-display');
-        const qStepperTrack = document.querySelector('.q-stepper-track');
-        const qStepperFill = document.getElementById('q-stepper-fill');
-        const qInput = document.getElementById('num_questions');
-        if (qMinusBtn && qPlusBtn && qCountDisplay && qStepperTrack && qStepperFill && qInput) {
-            const updateStepper = (value) => {
-                const max = parseInt(qInput.max) || 25;
-                const min = parseInt(qInput.min) || 1;
-                const clamped = Math.min(Math.max(value, min), max);
-                qInput.value = clamped;
-                qCountDisplay.textContent = clamped;
-                const percent = ((clamped - min) / (max - min)) * 100;
-                qStepperFill.style.width = `${percent}%`;
-            };
+        window.addEventListener('mousemove', (e) => {
+            if (isDragging) handleTrackInteraction(e);
+        });
 
-            let isDragging = false;
+        window.addEventListener('mouseup', () => {
+            isDragging = false;
+        });
 
-            const handleTrackInteraction = (e) => {
-                const rect = qStepperTrack.getBoundingClientRect();
-                const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-                const x = clientX - rect.left;
-                const percent = Math.min(Math.max(x / rect.width, 0), 1);
-                const max = parseInt(qInput.max) || 25;
-                const min = parseInt(qInput.min) || 1;
-                const value = Math.round(min + (max - min) * percent);
-                updateStepper(value);
-            };
+        // Touch Interaction
+        qStepperTrack.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            handleTrackInteraction(e);
+        }, { passive: true });
 
-            qMinusBtn.addEventListener('click', () => updateStepper(parseInt(qInput.value) - 1));
-            qPlusBtn.addEventListener('click', () => updateStepper(parseInt(qInput.value) + 1));
+        window.addEventListener('touchmove', (e) => {
+            if (isDragging) handleTrackInteraction(e);
+        }, { passive: true });
 
-            // Mouse Interaction
-            qStepperTrack.addEventListener('mousedown', (e) => {
-                isDragging = true;
-                handleTrackInteraction(e);
-            });
+        window.addEventListener('touchend', () => {
+            isDragging = false;
+        });
 
-            window.addEventListener('mousemove', (e) => {
-                if (isDragging) handleTrackInteraction(e);
-            });
-
-            window.addEventListener('mouseup', () => {
-                isDragging = false;
-            });
-
-            // Touch Interaction
-            qStepperTrack.addEventListener('touchstart', (e) => {
-                isDragging = true;
-                handleTrackInteraction(e);
-            }, { passive: true });
-
-            window.addEventListener('touchmove', (e) => {
-                if (isDragging) handleTrackInteraction(e);
-            }, { passive: true });
-
-            window.addEventListener('touchend', () => {
-                isDragging = false;
-            });
-
-            // Initialize stepper width
-            updateStepper(parseInt(qInput.value));
-        }
-
-        // --- Difficulty Pill Logic ---
-        const diffPills = document.querySelectorAll('.diff-pill');
-        const diffInput = document.getElementById('difficulty_level');
-        if (diffPills.length && diffInput) {
-            diffPills.forEach(pill => {
-                pill.addEventListener('click', () => {
-                    diffPills.forEach(p => p.classList.remove('active'));
-                    pill.classList.add('active');
-                    diffInput.value = pill.getAttribute('data-value');
-                });
-            });
-        }
+        // Initialize stepper width
+        updateStepper(parseInt(qInput.value));
     }
 
-    function updateThemeIcon(theme) {
-        if (!themeIcon) return;
-        themeIcon.className = (theme === 'dark') ? 'fas fa-sun' : 'fas fa-moon';
+    // --- Difficulty Pill Logic ---
+    const diffPills = document.querySelectorAll('.diff-pill');
+    const diffInput = document.getElementById('difficulty_level');
+    if (diffPills.length && diffInput) {
+        diffPills.forEach(pill => {
+            pill.addEventListener('click', () => {
+                diffPills.forEach(p => p.classList.remove('active'));
+                pill.classList.add('active');
+                diffInput.value = pill.getAttribute('data-value');
+            });
+        });
     }
 
     // --- Loading Overlay ---

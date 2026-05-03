@@ -28,9 +28,12 @@
     <div class="main-wrapper {% if session.get('quiz_generated') %}quiz-active{% endif %}" id="main-wrapper">
 
         <!-- --- Sidebar Control Panel --- -->
-        <aside class="sidebar shadow-lg" id="sidebar">
+        <aside class="sidebar" id="sidebar">
             <div class="logo-container">
                 <img src="{{ url_for('static', filename='logo.png') }}" alt="Quizer Pro Logo" class="sidebar-logo">
+                <button id="theme-toggle-sidebar" class="btn-theme-toggle sidebar-theme-toggle" title="Switch Theme">
+                    <i class="fas fa-moon" id="theme-icon-sidebar"></i>
+                </button>
             </div>
 
             <div class="sidebar-scrollable">
