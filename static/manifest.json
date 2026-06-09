@@ -1,0 +1,37 @@
+{
+  "name": "Quizer Pro | AI-Powered Learning",
+  "short_name": "Quizer Pro",
+  "description": "The professional's tool for instant, AI-tailored assessment. Analyze any text or PDF and generate precision-engineered quizzes in seconds.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#0a0f1d",
+  "theme_color": "#6366f1",
+  "scope": "/",
+  "icons": [
+    {
+      "src": "/static/logo_192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/logo_192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/static/logo_512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/logo_512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}

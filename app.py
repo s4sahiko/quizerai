@@ -107,6 +107,14 @@ def generate_quiz_data(content_text, num_questions, difficulty):
 
 # --- Flask Routes ---
 
+@app.route('/manifest.json')
+def serve_manifest():
+    return app.send_static_file('manifest.json')
+
+@app.route('/sw.js')
+def serve_sw():
+    return app.send_static_file('sw.js')
+
 @app.route('/', methods=['GET', 'POST'])
 def index():
     error = None

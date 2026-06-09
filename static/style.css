@@ -1141,3 +1141,33 @@ body {
         padding-bottom: 4rem; /* Bottom spacing */
     }
 }
+
+/* --- PWA Network Status Badge --- */
+.network-badge {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: opacity 0.5s ease, transform 0.3s ease;
+}
+
+.network-badge.online {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.network-badge.offline {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.network-badge.fade-out {
+    opacity: 0;
+    pointer-events: none;
+    transform: translateY(-5px);
+}

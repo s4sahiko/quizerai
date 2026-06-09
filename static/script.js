@@ -183,15 +183,22 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- Quiz Logic State ---
     let userSelections = {};
 
-    // Initialize selections from session if they exist
-    if (typeof QUIZ_DATA !== 'undefined' && typeof USER_ANSWERS !== 'undefined') {
+    // Initialize selections from localStorage or session
+    const cachedSelections = localStorage.getItem('quizer_selections');
+    if (cachedSelections) {
+        try {
+            userSelections = JSON.parse(cachedSelections);
+        } catch (e) {
+            console.error('Error parsing cached selections', e);
+        }
+    } else if (typeof QUIZ_DATA !== 'undefined' && typeof USER_ANSWERS !== 'undefined') {
         Object.entries(USER_ANSWERS).forEach(([key, val]) => {
             if (val !== null && val !== undefined && QUIZ_DATA[key]) {
                 userSelections[key] = QUIZ_DATA[key].answerOptions[val].text;
             }
         });
-        updateProgress();
     }
+    updateProgress();
 
     function updateProgress() {
         if (!QUIZ_DATA || QUIZ_DATA.length === 0 || !progressBar) return;
@@ -261,6 +268,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         allPills.forEach(p => p.classList.remove('active'));
                         this.classList.add('active');
                         userSelections[qIndex] = option.text;
+                        localStorage.setItem('quizer_selections', JSON.stringify(userSelections));
                         updateProgress();
                     });
                 }
@@ -306,6 +314,11 @@ document.addEventListener('DOMContentLoaded', function () {
             e.preventDefault();
             if (typeof IS_SUBMITTED !== 'undefined' && IS_SUBMITTED) return;
 
+            if (!navigator.onLine) {
+                alert("You are offline. Your current selections have been saved locally. Please connect to the internet to submit your final assessment.");
+                return;
+            }
+
             const submitBtn = document.getElementById('submit-quiz-btn');
             submitBtn.disabled = true;
             submitBtn.classList.add('opacity-50');
@@ -318,8 +331,10 @@ document.addEventListener('DOMContentLoaded', function () {
             })
                 .then(response => response.json())
                 .then(data => {
-                    if (data.success) window.location.reload();
-                    else {
+                    if (data.success) {
+                        localStorage.removeItem('quizer_selections');
+                        window.location.reload();
+                    } else {
                         submitBtn.disabled = false;
                         submitBtn.classList.remove('opacity-50');
                         submitBtn.innerHTML = 'Retry Submission';
@@ -366,6 +381,66 @@ document.addEventListener('DOMContentLoaded', function () {
         `;
     }
 
-    if (typeof QUIZ_DATA !== 'undefined' && QUIZ_DATA.length > 0) renderQuiz();
-    if (typeof IS_SUBMITTED !== 'undefined' && IS_SUBMITTED) renderResultsSummary();
+    if (typeof QUIZ_DATA !== 'undefined' && QUIZ_DATA.length > 0) {
+        renderQuiz();
+    } else {
+        localStorage.removeItem('quizer_selections');
+    }
+    if (typeof IS_SUBMITTED !== 'undefined' && IS_SUBMITTED) {
+        renderResultsSummary();
+        localStorage.removeItem('quizer_selections');
+    }
+
+    // --- Network Status & Offline Management ---
+    const networkStatus = document.getElementById('network-status');
+    const generateBtn = document.getElementById('generate-quiz-btn');
+
+    function updateNetworkStatus() {
+        if (navigator.onLine) {
+            if (networkStatus) {
+                networkStatus.classList.remove('d-none');
+                networkStatus.className = 'network-badge online';
+                networkStatus.innerHTML = '<i class="fas fa-wifi"></i> <span>Online</span>';
+                setTimeout(() => {
+                    if (navigator.onLine) {
+                        networkStatus.classList.add('fade-out');
+                    }
+                }, 3000);
+            }
+            if (generateBtn) {
+                generateBtn.disabled = false;
+                const btnSpan = generateBtn.querySelector('span');
+                if (btnSpan) btnSpan.textContent = 'Generate Quiz';
+            }
+        } else {
+            if (networkStatus) {
+                networkStatus.classList.remove('d-none');
+                networkStatus.classList.remove('fade-out');
+                networkStatus.className = 'network-badge offline';
+                networkStatus.innerHTML = '<i class="fas fa-wifi-slash"></i> <span>Offline</span>';
+            }
+            if (generateBtn) {
+                generateBtn.disabled = true;
+                const btnSpan = generateBtn.querySelector('span');
+                if (btnSpan) btnSpan.textContent = 'Offline Mode';
+            }
+        }
+    }
+
+    window.addEventListener('online', updateNetworkStatus);
+    window.addEventListener('offline', updateNetworkStatus);
+    updateNetworkStatus();
+
+    // --- Service Worker Registration ---
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('/sw.js')
+                .then(registration => {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                })
+                .catch(err => {
+                    console.error('ServiceWorker registration failed: ', err);
+                });
+        });
+    }
 });

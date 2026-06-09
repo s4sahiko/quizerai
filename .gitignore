@@ -1,0 +1,16 @@
+# Virtual environment (local libraries)
+.venv/
+venv/
+ENV/
+
+# Environment variables & Secrets
+.env
+
+# Python compilation cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Operating System files
+.DS_Store
+Thumbs.db
