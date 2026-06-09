@@ -909,6 +909,8 @@ body {
     z-index: 10;
     animation: loader-glow 2s ease-in-out infinite;
     margin: 0;
+    border-radius: 50%;
+    overflow: hidden;
 }
 
 [data-theme="dark"] .loader-logo {
